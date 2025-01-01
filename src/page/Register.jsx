@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import loginImage from "../assets/others/authentication2.png";
 import bgImage from "../assets/reservation/wood-grain-pattern-gray1x.png";
 
@@ -6,14 +6,17 @@ import { useForm } from "react-hook-form";
 import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
 import { AuthContext } from "../providers/AuthProvider";
+import Swal from "sweetalert2";
 
 const Register = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
-  const {createUser} = useContext(AuthContext)
+  const {createUser, updateUserProfile} = useContext(AuthContext)
+  const navigate = useNavigate()
 
   const onSubmit = (data) => {
     console.log(data);
@@ -21,6 +24,20 @@ const Register = () => {
     .then(result =>{
         const loggedUser = result.user;
         console.log(loggedUser);
+        updateUserProfile(data.name, data.photoURL)
+        .then(()=>{
+          console.log('user profile info updated');
+          reset()
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "User created Successfully",
+            showConfirmButton: false,
+            timer: 1500
+          });
+          navigate('/')
+        })
+        .catch(err => console.log(err))
     })
   };
 
@@ -66,6 +83,22 @@ const Register = () => {
                 />
                 {errors.name && (
                   <span className="text-red-600">Name is required</span>
+                )}
+              </div>
+              {/* Photo Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Photo URL
+                </label>
+                <input
+                  type="text"
+                  {...register("photoURL", { required: true })}
+                  
+                  placeholder="Photo URL"
+                  className="w-full mt-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+                />
+                {errors.photoURL && (
+                  <span className="text-red-600">Photo URL is required</span>
                 )}
               </div>
               {/* Email Input */}
