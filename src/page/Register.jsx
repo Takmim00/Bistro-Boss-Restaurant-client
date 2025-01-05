@@ -2,50 +2,74 @@ import { Link, useNavigate } from "react-router-dom";
 import loginImage from "../assets/others/authentication2.png";
 import bgImage from "../assets/reservation/wood-grain-pattern-gray1x.png";
 
-import { useForm } from "react-hook-form";
-import { Helmet } from "react-helmet-async";
 import { useContext } from "react";
-import { AuthContext } from "../providers/AuthProvider";
+import { Helmet } from "react-helmet-async";
+import { useForm } from "react-hook-form";
+import { FaGoogle } from "react-icons/fa6";
 import Swal from "sweetalert2";
+import useAuth from "../hooks/useAuth";
+import useAxiosPublic from "../hooks/useAxiosPublic";
+import { AuthContext } from "../providers/AuthProvider";
 
 const Register = () => {
+  const { googleSignIn } = useAuth();
+  const axiosPublic = useAxiosPublic();
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm();
-  const {createUser, updateUserProfile} = useContext(AuthContext)
-  const navigate = useNavigate()
+  const { createUser, updateUserProfile } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const onSubmit = (data) => {
-    console.log(data);
-    createUser(data.email, data.password)
-    .then(result =>{
-        const loggedUser = result.user;
-        console.log(loggedUser);
-        updateUserProfile(data.name, data.photoURL)
-        .then(()=>{
-          console.log('user profile info updated');
-          reset()
-          Swal.fire({
-            position: "top-end",
-            icon: "success",
-            title: "User created Successfully",
-            showConfirmButton: false,
-            timer: 1500
+    createUser(data.email, data.password).then((result) => {
+      const loggedUser = result.user;
+      updateUserProfile(data.name, data.photoURL)
+        .then(() => {
+          const userInfo = {
+            name: data.name,
+            email: data.email,
+          };
+          axiosPublic.post("/users", userInfo).then((res) => {
+            if (res.data.insertedId) {
+              console.log();
+              reset();
+              Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "User created Successfully",
+                showConfirmButton: false,
+                timer: 1500,
+              });
+              navigate("/");
+            }
           });
-          navigate('/')
         })
-        .catch(err => console.log(err))
-    })
+        .catch((err) => console.log(err));
+    });
+  };
+  const handleGoogleSignIn = () => {
+    googleSignIn().then((res) => {
+      console.log(res.user);
+      const userInfo = {
+        email: res.user?.email,
+        name: res.user?.displayName,
+      };
+      axiosPublic.post("/users", userInfo).then((res) => {
+        console.log(res.data);
+        navigate("/");
+      });
+    });
   };
 
   return (
     <>
-    <Helmet>
+      <Helmet>
         <title>Bistro Boss || Sign Up</title>
-    </Helmet>
+      </Helmet>
       <div
         className="flex h-screen items-center justify-center bg-gray-100"
         style={{
@@ -93,7 +117,6 @@ const Register = () => {
                 <input
                   type="text"
                   {...register("photoURL", { required: true })}
-                  
                   placeholder="Photo URL"
                   className="w-full mt-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
@@ -178,8 +201,11 @@ const Register = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">Or sign up with</p>
               <div className="flex justify-center mt-2 space-x-4">
-                <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
-                  <i className="fab fa-facebook-f text-blue-600"></i>
+                <button
+                  onClick={handleGoogleSignIn}
+                  className="p-2 rounded-full bg-gray-100 text-2xl hover:bg-gray-200"
+                >
+                  <FaGoogle />
                 </button>
                 <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
                   <i className="fab fa-google text-red-600"></i>

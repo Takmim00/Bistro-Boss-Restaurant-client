@@ -11,12 +11,18 @@ import Swal from "sweetalert2";
 import loginImage from "../assets/others/authentication2.png";
 import bgImage from "../assets/reservation/wood-grain-pattern-gray1x.png";
 import { AuthContext } from "../providers/AuthProvider";
+import { FaGoogle } from "react-icons/fa6";
+import useAuth from "../hooks/useAuth";
+import useAxiosPublic from "../hooks/useAxiosPublic";
 
 const Login = () => {
   const [disabled, setDisabled] = useState(true);
   const { signIn } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const {googleSignIn} = useAuth();
+  const axiosPublic = useAxiosPublic();
+  
 
   const from = location.state?.from?.pathname || '/'
 
@@ -61,6 +67,21 @@ const Login = () => {
 
     console.log(user_captcha_value);
   };
+  const handleGoogleSignIn=()=>{
+    googleSignIn()
+    .then(res=>{
+      console.log(res.user);
+      const userInfo = {
+        email: res.user?.email,
+        name: res.user?.displayName
+      }
+      axiosPublic.post('/users', userInfo)
+      .then(res=>{
+        console.log(res.data);
+        navigate('/')
+      })
+    })
+  }
   return (
     <>
       <Helmet>
@@ -169,8 +190,8 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">Or sign in with</p>
               <div className="flex justify-center mt-2 space-x-4">
-                <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
-                  <i className="fab fa-facebook-f text-blue-600"></i>
+                <button onClick={handleGoogleSignIn} className="p-2 rounded-full bg-gray-100 text-2xl hover:bg-gray-200">
+                  <FaGoogle />
                 </button>
                 <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
                   <i className="fab fa-google text-red-600"></i>
